@@ -1,0 +1,48 @@
+{
+  "name": "Aquakit",
+  "short_name": "Aquakit",
+  "icons": [
+    {
+      "src": "/images/icons/maskable_icon_x48.png",
+      "type": "image/png",
+      "sizes": "48x48"
+    },
+    {
+      "src": "/images/icons/maskable_icon_x72.png",
+      "type": "image/png",
+      "sizes": "72x72"
+    },
+    {
+      "src": "/images/icons/maskable_icon_x96.png",
+      "type": "image/png",
+      "sizes": "96x96"
+    },
+    {
+      "src": "/images/icons/maskable_icon_x128.png",
+      "type": "image/png",
+      "sizes": "128x128"
+    },
+    {
+      "src": "/images/icons/maskable_icon_x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/images/icons/maskable_icon_x384.png",
+      "type": "image/png",
+      "sizes": "384x384"
+    },
+    {
+      "src": "/images/icons/maskable_icon_x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "scope": "/",
+  "start_url": "/",
+  "description": "Welcome to Aquakit! Explore the ultimate web interface for your Arduino-powered aquarium. Monitor and control temperature, pH levels, auto-feed your aquatic friends, and enjoy auto water refill and drain features. With real-time stats showcased in our user-friendly app, dive into the seamless experience of managing your aquarium with ease and precision. Create an aquatic haven with Aquakit today!",
+  "display": "standalone",
+  "theme_color": "#324A5E",
+  "background_color": "#324A5E"
+}
