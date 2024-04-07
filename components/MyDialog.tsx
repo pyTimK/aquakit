@@ -2,6 +2,7 @@ import React, { MutableRefObject, useRef, useState } from "react";
 import MyInput from "../components/MyInput";
 import MyButton from "../components/MyButton";
 import notify from "@/myfunctions/notify";
+import { isValidMilitaryTime } from "@/myfunctions/is_valid_military_time";
 
 interface MyDialogProps {
   children?: React.ReactNode;
@@ -9,7 +10,9 @@ interface MyDialogProps {
   title: string;
   initialValue: string;
   units: string;
+  type?: "number" | "text";
   onSaveCallbackRef: MutableRefObject<(val: number) => void>;
+  onSaveCallbackStrRef?: MutableRefObject<((val: string) => void) | undefined>;
   closeDialog: () => void;
 }
 
@@ -18,7 +21,9 @@ const MyDialog: React.FC<MyDialogProps> = ({
   title,
   initialValue,
   units,
+  type = "number",
   onSaveCallbackRef,
+  onSaveCallbackStrRef,
   closeDialog,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -32,13 +37,24 @@ const MyDialog: React.FC<MyDialogProps> = ({
       return;
     }
 
-    const inputNum = parseInt(input);
-    if (isNaN(inputNum)) {
-      setError(true);
-      notify(`Enter a valid number`);
-      return;
+    if (type === "text") {
+      if (!isValidMilitaryTime(input)) {
+        setError(true);
+        notify(`Enter a valid time`);
+        return;
+      }
+      if (onSaveCallbackStrRef && onSaveCallbackStrRef.current) {
+        onSaveCallbackStrRef.current(input.length === 4 ? `0${input}` : input);
+      }
+    } else {
+      const inputNum = parseInt(input);
+      if (isNaN(inputNum)) {
+        setError(true);
+        notify(`Enter a valid number`);
+        return;
+      }
+      onSaveCallbackRef.current(inputNum);
     }
-    onSaveCallbackRef.current(inputNum);
     closeDialog();
   }
 
@@ -61,7 +77,7 @@ const MyDialog: React.FC<MyDialogProps> = ({
                 placeholder={initialValue}
                 innerRef={inputRef}
                 bg="white"
-                type="number"
+                type={type}
                 error={error}
                 onChange={() => setError(false)}
                 alignment="text-center"

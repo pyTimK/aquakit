@@ -10,14 +10,14 @@
 
 html {
   max-width: 100%;
-  overflow-x: hidden;
+  /* overflow-x: hidden; */
 }
 
 body {
   overscroll-behavior: contain;
   padding: 0;
   max-width: 100%;
-  overflow-x: hidden;
+  /* overflow-x: hidden; */
 }
 
 

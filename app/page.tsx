@@ -8,6 +8,7 @@ import { auth } from "./firebase";
 import { ToastContainer } from "react-toastify";
 import useLocalStorage from "@/hooks/useLocalStorage";
 import { StorageNames } from "./constants";
+import LoadingPage from "./loading";
 
 export default function Home() {
   return (
@@ -29,7 +30,7 @@ const Wrapper = () => {
   }, []);
 
   if (loading) {
-    return <p>LLOADING</p>;
+    return <LoadingPage />;
   }
 
   if (user === null) {

@@ -32,6 +32,8 @@ import MyDialog from "@/components/MyDialog";
 import useDeviceDimensions from "@/hooks/useDeviceDimensions";
 import MyButton from "@/components/MyButton";
 import { auth } from "../firebase";
+import { motion } from "framer-motion";
+import CloseIcon from "@/components/svg/CloseIcon";
 
 interface MainPageProps {
   user: User;
@@ -41,7 +43,9 @@ type openDialogType = {
   title: string;
   initialValue: string;
   units: string;
+  type?: "number" | "text";
   onSave: (val: number) => void;
+  onSaveStr?: (val: string) => void;
 };
 
 const MainPageContext = createContext({
@@ -56,7 +60,13 @@ const MainPageContext = createContext({
   setOpenFishDropdown: null as Dispatch<SetStateAction<boolean>> | null,
   openAvatarDropdown: false,
   setOpenAvatarDropdown: null as Dispatch<SetStateAction<boolean>> | null,
-  openDialog: ({ title, initialValue, units, onSave }: openDialogType) => {},
+  openDialog: ({
+    title,
+    initialValue,
+    units,
+    onSave,
+    type,
+  }: openDialogType) => {},
   screenWidth: 0,
 });
 
@@ -71,7 +81,13 @@ const MainPage: React.FC<MainPageProps> = ({ user }) => {
   const [title, setTitle] = useState("Title");
   const [initialValue, setInitialValue] = useState("25");
   const [units, setUnits] = useState("sec");
+  const [dialogInputType, setDialogInputType] = useState<"number" | "text">(
+    "number"
+  );
   const onSaveCallbackRef = useRef<(val: number) => void>((val) => {});
+  const onSaveCallbackStrRef = useRef<((val: string) => void) | undefined>(
+    (val) => {}
+  );
   const lowerDataRef = useRef<HTMLDivElement>(null);
   // const bottomDivRef = useRef<HTMLDivElement>(null);
   const [lowerDataHeight, setLowerDataHeight] = useState(0);
@@ -80,12 +96,21 @@ const MainPage: React.FC<MainPageProps> = ({ user }) => {
 
   // function openDropdown({}){}
 
-  function openDialog({ title, initialValue, units, onSave }: openDialogType) {
+  function openDialog({
+    title,
+    initialValue,
+    units,
+    onSave,
+    onSaveStr,
+    type = "number",
+  }: openDialogType) {
     setShowDialog(true);
     setTitle(title);
     setInitialValue(initialValue);
     setUnits(units);
+    setDialogInputType(type);
     onSaveCallbackRef.current = onSave;
+    onSaveCallbackStrRef.current = onSaveStr;
   }
 
   // const handleScroll = () => {
@@ -156,7 +181,9 @@ const MainPage: React.FC<MainPageProps> = ({ user }) => {
         initialValue={initialValue}
         title={title}
         units={units}
+        type={dialogInputType}
         onSaveCallbackRef={onSaveCallbackRef}
+        onSaveCallbackStrRef={onSaveCallbackStrRef}
       />
       {/* <MyDropdown
         open={openDropdown}
@@ -301,8 +328,24 @@ const DrainData = () => {
     openDialog({
       title: "Add Drain Time",
       initialValue: "",
-      onSave: (newVal) => {},
-      units: "",
+      onSave: () => {},
+      onSaveStr: (inputTime) => {
+        if (inputTime in fishData.drain_schedules) return;
+
+        updateFishData({
+          drain_schedules: [...fishData.drain_schedules, inputTime],
+        });
+      },
+      type: "text",
+      units: "23:59",
+    });
+  };
+
+  const handleRemoveTime = (time: string) => {
+    updateFishData({
+      drain_schedules: fishData.drain_schedules.filter(
+        (sched) => sched !== time
+      ),
     });
   };
 
@@ -316,26 +359,33 @@ const DrainData = () => {
         onSave={handleDrainDurationChange}
         onlyTopRounded
       />
-      <div className="flex justify-start items-center space-x-5 py-3 px-5 border-darker_blue border-t">
+      <div className="whitespace-nowrap overflow-x-scroll flex justify-start items-center space-x-5 py-3 px-5 border-darker_blue border-t">
         {fishData.drain_schedules &&
           fishData.drain_schedules.map((sched) => {
             const { time, meridiem } = convertTo12HourFormat(sched);
             return (
-              <div
+              <motion.div
                 key={sched}
-                className="border border-darker_blue rounded-full bg-light_blue w-16 h-16 flex flex-col justify-center items-center"
+                className="relative select-none shrink-0 border border-darker_blue rounded-full bg-light_blue w-16 h-16 flex flex-col justify-center items-center"
               >
                 <p>{time}</p>
                 <p className="text-xs">{meridiem}</p>
-              </div>
+                <div
+                  className="absolute top-0 right-0 cursor-pointer"
+                  onClick={() => handleRemoveTime(sched)}
+                >
+                  <CloseIcon />
+                </div>
+              </motion.div>
             );
           })}
-        <div
+        <motion.div
+          whileTap={{ scale: 0.8 }}
           onClick={handleAddTime}
-          className="border border-dashed border-darker_blue rounded-full bg-light_blue w-16 h-16 flex flex-col justify-center items-center"
+          className="select-none cursor-pointer shrink-0 border border-dashed border-darker_blue rounded-full bg-light_blue min-w-16 w-16 h-16 flex flex-col justify-center items-center"
         >
           <p className={`${interFont} text-4xl font-extralight`}>+</p>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
@@ -362,20 +412,76 @@ function convertTo12HourFormat(timeString: string) {
 }
 
 const FeedData = () => {
-  const { fishData, updateFishData } = useContext(MainPageContext);
+  const { fishData, updateFishData, openDialog } = useContext(MainPageContext);
 
   function handleFeedDurationChange(feeding_duration: number) {
     updateFishData({ feeding_duration });
   }
 
+  const handleAddTime: MouseEventHandler<HTMLDivElement> = (e) => {
+    openDialog({
+      title: "Add Feeding Time",
+      initialValue: "",
+      onSave: () => {},
+      onSaveStr: (inputTime) => {
+        if (inputTime in fishData.feeding_schedules) return;
+
+        updateFishData({
+          feeding_schedules: [...fishData.feeding_schedules, inputTime],
+        });
+      },
+      type: "text",
+      units: "23:59",
+    });
+  };
+
+  const handleRemoveTime = (time: string) => {
+    updateFishData({
+      feeding_schedules: fishData.feeding_schedules.filter(
+        (sched) => sched !== time
+      ),
+    });
+  };
+
   return (
-    <BoxData
-      title="Feed"
-      subtitle="Settings"
-      units="s"
-      value={fishData.feeding_duration}
-      onSave={handleFeedDurationChange}
-    />
+    <div className="border border-darker_blue rounded-2xl">
+      <BoxData
+        title="Feed"
+        subtitle="Settings"
+        units="s"
+        value={fishData.feeding_duration}
+        onSave={handleFeedDurationChange}
+        onlyTopRounded
+      />
+      <div className="whitespace-nowrap overflow-x-scroll flex justify-start items-center space-x-5 py-3 px-5 border-darker_blue border-t">
+        {fishData.feeding_schedules &&
+          fishData.feeding_schedules.map((sched) => {
+            const { time, meridiem } = convertTo12HourFormat(sched);
+            return (
+              <motion.div
+                key={sched}
+                className="relative select-none shrink-0 border border-darker_blue rounded-full bg-light_blue w-16 h-16 flex flex-col justify-center items-center"
+              >
+                <p>{time}</p>
+                <p className="text-xs">{meridiem}</p>
+                <div
+                  className="absolute top-0 right-0 cursor-pointer"
+                  onClick={() => handleRemoveTime(sched)}
+                >
+                  <CloseIcon />
+                </div>
+              </motion.div>
+            );
+          })}
+        <motion.div
+          whileTap={{ scale: 0.8 }}
+          onClick={handleAddTime}
+          className="select-none cursor-pointer shrink-0 border border-dashed border-darker_blue rounded-full bg-light_blue min-w-16 w-16 h-16 flex flex-col justify-center items-center"
+        >
+          <p className={`${interFont} text-4xl font-extralight`}>+</p>
+        </motion.div>
+      </div>
+    </div>
   );
 };
 
@@ -490,7 +596,7 @@ const AvatarDropdown = () => {
 interface FishDropdownProps {}
 
 const FishDropdown: React.FC<FishDropdownProps> = () => {
-  const { fish, openFishDropdown, setOpenFishDropdown, setFish } =
+  const { fish, openFishDropdown, setOpenFishDropdown, setFish, updateData } =
     useContext(MainPageContext);
 
   function toggleOpenFishDropdown() {
@@ -519,6 +625,7 @@ const FishDropdown: React.FC<FishDropdownProps> = () => {
                   onClick={() => {
                     if (!setFish) return;
                     setFish(fish);
+                    updateData({ fish_type: fish.name });
                     toggleOpenFishDropdown();
                   }}
                 >

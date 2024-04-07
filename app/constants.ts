@@ -11,3 +11,7 @@ export const Fishes: Record<string, Fish> = {
   cory: { name: "Cory Catfish", image: Cory() } as Fish,
   molly: { name: "Molly", image: Molly() } as Fish,
 };
+
+export const Colors = {
+  darker_blue: "#70BDF2",
+};
